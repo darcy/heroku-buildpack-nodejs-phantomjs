@@ -13,6 +13,10 @@ unset GIT_DIR
 # config
 SCONS_VERSION="1.2.0"
 S3_BUCKET="heroku-buildpack-nodejs"
+PHANTOM_VERSION="1.5.0"
+PHANTOM_S3_BUCKET="tools.editkitchen.com"
+PHANTOM_FILE_NAME="buildpack-phantomjs-${PHANTOM_VERSION}.tar.gz"
+BUILDPACK_PHANTOMJS_PACKAGE="http://${PHANTOM_S3_BUCKET}.s3.amazonaws.com/${PHANTOM_FILE_NAME}"
 
 # parse and derive params
 BUILD_DIR=$1
@@ -144,6 +148,16 @@ SCONS_PACKAGE="http://${S3_BUCKET}.s3.amazonaws.com/scons-${SCONS_VERSION}.tgz"
 VENDORED_NODE="$(mktmpdir node)"
 VENDORED_NPM="$(mktmpdir npm)"
 VENDORED_SCONS="$(mktmpdir scons)"
+
+mkdir -p $CACHE_DIR
+if ! [ -e $CACHE_DIR/$PHANTOM_FILE_NAME ]; then
+  echo "-----> Fetching PhantomJS buildpack binaries"
+  curl $BUILDPACK_PHANTOMJS_PACKAGE -s -o $CACHE_DIR/$PHANTOM_FILE_NAME
+fi
+
+echo "-----> Extracting PhantomJS binaries" 
+mkdir -p $BUILD_DIR/vendor/phantomjs
+tar zxf $CACHE_DIR/$PHANTOM_FILE_NAME -C $BUILD_DIR/vendor/phantomjs
 
 # download and unpack packages
 echo "-----> Fetching Node.js binaries"
